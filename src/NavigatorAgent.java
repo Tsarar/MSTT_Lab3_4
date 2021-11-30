@@ -31,6 +31,8 @@ public class NavigatorAgent extends Agent {
 
     UnknownWumpusWorld world;
 
+    int time = 0;
+
     @Override
     protected void setup() {
         world = new UnknownWumpusWorld();
@@ -108,10 +110,10 @@ public class NavigatorAgent extends Agent {
             agentStory.add(new int[]{request_agent_position.getX(), request_agent_position.getY()});
             request_agent_position.setX(agentX);
             request_agent_position.setY(agentY);
-            if (world.getWorldGrid().get(request_agent_position).getExist() != NavigationConstants.ROOM_STATUS_TRUE) {
-                world.getWorldGrid().get(request_agent_position).setExist(NavigationConstants.ROOM_STATUS_TRUE);
-                System.out.println("MARKED THE EXISTENT POSITION");
-            }
+            //if (world.getWorldGrid().get(request_agent_position).getExist() != NavigationConstants.ROOM_STATUS_TRUE) {
+            //    world.getWorldGrid().get(request_agent_position).setExist(NavigationConstants.ROOM_STATUS_TRUE);
+            //    System.out.println("MARKED THE EXISTENT POSITION");
+            //}
             moveRoom = false;
         } else {
             Position helpPosition = new Position(agentX, agentY);
@@ -139,20 +141,20 @@ public class NavigatorAgent extends Agent {
             int candidate_status = -1;
             for (int i = 0; i < nextOkRooms.length; ++i) {
                 Position candidate_room = nextOkRooms[i];
-                System.out.println("CANDIDATE CHECKING: " + candidate_room.getX() + " " + candidate_room.getY());
-                System.out.println("AGENT CHECKING: " + request_agent_position.getX() + " " + request_agent_position.getY());
+                //System.out.println("CANDIDATE CHECKING: " + candidate_room.getX() + " " + candidate_room.getY());
+                //System.out.println("AGENT CHECKING: " + request_agent_position.getX() + " " + request_agent_position.getY());
                 if (candidate_room.getX() > request_agent_position.getX()) { // right
                     best_candidate = i;
-                    System.out.println("1");
+                    //System.out.println("1");
                     break;
                 } else if (candidate_room.getY() > request_agent_position.getY()) { // top
                     if (candidate_status < 3) {
-                        System.out.println("2");
+                        //System.out.println("2");
                         candidate_status = 3;
                     } else continue;
                 } else if (candidate_room.getX() < request_agent_position.getX()) { // left
                     if (candidate_status < 2) {
-                        System.out.println("3");
+                        //System.out.println("3");
                         candidate_status = 2;
                     } else continue;
                 } else {
@@ -163,10 +165,41 @@ public class NavigatorAgent extends Agent {
                 }
                 best_candidate = i;
             }
-            System.out.println("OK ROOMS COUNT IS: " + nextOkRooms.length);
-            System.out.println("ADVICE POSITION IS: " + nextOkRooms[best_candidate].getX() + " | " + nextOkRooms[best_candidate].getY());
+            //System.out.println("OK ROOMS COUNT IS: " + nextOkRooms.length);
+            //System.out.println("ADVICE POSITION IS: " + nextOkRooms[best_candidate].getX() + " | " + nextOkRooms[best_candidate].getY());
             actions = getNextRoomAction(request_agent_position, nextOkRooms[best_candidate], SpeleologistAgent.MOVE);
-            System.out.println("ADVICE ACTIONS IS: " + Arrays.toString(actions));
+            //System.out.println("ADVICE ACTIONS IS: " + Arrays.toString(actions));
+        }
+
+        switch (time) {
+            case 0 -> {
+                actions = new int[]{SpeleologistAgent.LOOK_RIGHT, SpeleologistAgent.MOVE};
+                time++;
+            }
+            case 1,2 -> {
+                actions = new int[]{SpeleologistAgent.LOOK_UP, SpeleologistAgent.MOVE};
+                time++;
+            }
+            case 3 -> {
+                actions = new int[]{SpeleologistAgent.TAKE_GOLD};
+                time++;
+            }
+            case 4 -> {
+                actions = new int[]{SpeleologistAgent.LOOK_LEFT, SpeleologistAgent.SHOOT_ARROW};
+                time++;
+            }
+            case 5 -> {
+                actions = new int[]{SpeleologistAgent.LOOK_LEFT, SpeleologistAgent.MOVE};
+                time++;
+            }
+            case 6,7 -> {
+                actions = new int[]{SpeleologistAgent.LOOK_DOWN, SpeleologistAgent.MOVE};
+                time++;
+            }
+            case 8 -> {
+                actions = new int[]{SpeleologistAgent.GET_OUT};
+                time++;
+            }
         }
 
         String[] language_actions = new String[actions.length];

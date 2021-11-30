@@ -19,6 +19,8 @@ public class SpeleologistAgent extends Agent {
     public static int MOVE = 4;
     public static int SHOOT_ARROW = 5;
     public static int TAKE_GOLD = 6;
+    public static int GET_OUT = 7;
+    public static int WIN = 8;
     public static java.util.HashMap<Integer, String> actionCodes = new java.util.HashMap<>() {{
         put(LOOK_RIGHT, "right");
         put(LOOK_LEFT, "left");
@@ -27,6 +29,7 @@ public class SpeleologistAgent extends Agent {
         put(MOVE, "move");
         put(SHOOT_ARROW, "shoot");
         put(TAKE_GOLD, "take");
+        put(GET_OUT, "out");
     }};
 
     public static String GO_INSIDE = "go_inside";
@@ -173,8 +176,11 @@ public class SpeleologistAgent extends Agent {
                             String actions = reply.getContent();
                             actions = actions.substring(1, actions.length()-1);
                             String[] instructions = actions.split(", ");
-                            if (instructions.length == 1){
+                            if (instructions.length == 1 && Objects.equals(instructions[0], actionCodes.get(TAKE_GOLD))){
                                 sendTakeGoldMessage();
+                            }
+                            else if (instructions.length == 1 && Objects.equals(instructions[0], actionCodes.get(GET_OUT))){
+                                sendGetOutMessage();
                             }
                             else if (instructions.length == 2 && Objects.equals(instructions[1], actionCodes.get(SHOOT_ARROW))){
                                 sendShootMessage(instructions[0]);
@@ -200,6 +206,19 @@ public class SpeleologistAgent extends Agent {
                     if (reply != null) {
                         currentWorldState = reply.getContent();
                         step = 1;
+
+                        if (reply.getContent().equals("GOLD")) {
+                            System.out.println("Speleologist: got GOLD!");
+                        }
+
+                        if (reply.getContent().equals("scream")) {
+                            System.out.println("Speleologist: I hear scream!");
+                        }
+
+                        if (reply.getContent().equals("WIN")) {
+                            System.out.println("Speleologist: I'm getting out from here!");
+                            step = 4;
+                        }
                     }
                     else {
                         block();
@@ -228,6 +247,19 @@ public class SpeleologistAgent extends Agent {
 
         private void sendTakeGoldMessage() {
             ACLMessage order = new ACLMessage(TAKE_GOLD);
+            order.addReceiver(wumpusWorld);
+
+            order.setContent("Take");
+            order.setConversationId(NAVIGATOR_DIGGER_CONVERSATION_ID);
+            order.setReplyWith("order"+System.currentTimeMillis());
+
+            myAgent.send(order);
+            mt = MessageTemplate.and(MessageTemplate.MatchConversationId(NAVIGATOR_DIGGER_CONVERSATION_ID),
+                    MessageTemplate.MatchInReplyTo(order.getReplyWith()));
+        }
+
+        private void sendGetOutMessage() {
+            ACLMessage order = new ACLMessage(GET_OUT);
             order.addReceiver(wumpusWorld);
 
             order.setContent("Take");

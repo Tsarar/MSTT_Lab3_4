@@ -41,6 +41,7 @@ public class WumpusWorldAgent extends Agent {
 
     private Room[][] wumpusMap;
     private HashMap<AID, Coordinates> Speleologists;
+    private boolean isGoldTaken = false;
 
     String nickname = "WumpusWorld";
     AID id = new AID(nickname, AID.ISLOCALNAME);
@@ -73,6 +74,7 @@ public class WumpusWorldAgent extends Agent {
         addBehaviour(new SpeleologistArrowPerformer());
         addBehaviour(new SpeleologistGoldPerformer());
         addBehaviour(new SpeleologistMovePerformer());
+        addBehaviour(new SpeleologistGetOutPerformer());
     }
 
     private void generateMap() {
@@ -163,6 +165,7 @@ public class WumpusWorldAgent extends Agent {
                     for (int i = 0; i < row; ++i){
                         if (wumpusMap[i][column].Events.contains(WumpusWorldAgent.roomCodes.get(WUMPUS))){
                             answer = NavigationConstants.SCREAM;
+                            wumpusMap[row][i].Events.remove(WumpusWorldAgent.roomCodes.get(WUMPUS));
                         }
                     }
                 }
@@ -170,6 +173,7 @@ public class WumpusWorldAgent extends Agent {
                     for (int i = row+1; i < NUMBER_OF_ROWS; ++i){
                         if (wumpusMap[i][column].Events.contains(WumpusWorldAgent.roomCodes.get(WUMPUS))){
                             answer = NavigationConstants.SCREAM;
+                            wumpusMap[row][i].Events.remove(WumpusWorldAgent.roomCodes.get(WUMPUS));
                         }
                     }
                 }
@@ -177,6 +181,7 @@ public class WumpusWorldAgent extends Agent {
                     for (int i = 0; i < column; ++i){
                         if (wumpusMap[row][i].Events.contains(WumpusWorldAgent.roomCodes.get(WUMPUS))){
                             answer = NavigationConstants.SCREAM;
+                            wumpusMap[row][i].Events.remove(WumpusWorldAgent.roomCodes.get(WUMPUS));
                         }
                     }
                 }
@@ -184,6 +189,7 @@ public class WumpusWorldAgent extends Agent {
                     for (int i = column+1; i < NUMBER_OF_COLUMNS; ++i){
                         if (wumpusMap[row][i].Events.contains(WumpusWorldAgent.roomCodes.get(WUMPUS))){
                             answer = NavigationConstants.SCREAM;
+                            wumpusMap[row][i].Events.remove(WumpusWorldAgent.roomCodes.get(WUMPUS));
                         }
                     }
                 }
@@ -270,9 +276,39 @@ public class WumpusWorldAgent extends Agent {
                 else {
                     if (wumpusMap[Speleologist_coords.row][Speleologist_coords.column]
                             .Events.contains(WumpusWorldAgent.roomCodes.get(GOLD))){
+                        isGoldTaken = true;
                         ACLMessage reply = msg.createReply();
                         reply.setPerformative(SpeleologistAgent.TAKE_GOLD);
                         reply.setContent("GOLD");
+                        myAgent.send(reply);
+                    }
+                }
+            }
+            else {
+                block();
+            }
+        }
+    }
+
+    private class SpeleologistGetOutPerformer extends CyclicBehaviour {
+        public void action() {
+            MessageTemplate mt = MessageTemplate.MatchPerformative(SpeleologistAgent.GET_OUT);
+            ACLMessage msg = myAgent.receive(mt);
+
+            if (msg != null) {
+                AID current_Speleologist = msg.getSender();
+                Coordinates Speleologist_coords = Speleologists.get(current_Speleologist);
+                if (Speleologist_coords == null){
+                    Speleologists.put(current_Speleologist, new Coordinates(0, 0));
+                }
+                else {
+                    if (isGoldTaken &&
+                        Speleologist_coords.column == 0 &&
+                        Speleologist_coords.row == 0)
+                    {
+                        ACLMessage reply = msg.createReply();
+                        reply.setPerformative(SpeleologistAgent.WIN);
+                        reply.setContent("WIN");
                         myAgent.send(reply);
                     }
                 }
